@@ -47,6 +47,11 @@ return [
                     base_path('app'),
                 ],
             ],
+            'allowedTags' => [],
+            'notAllowedTags' => [
+                'User/Profile',
+                'OpenApi/*'
+            ]
         ],
     ],
     'defaults' => [
@@ -108,16 +113,35 @@ return [
              * @link https://zircote.github.io/swagger-php/reference/processors.html
              */
             'default_processors_configuration' => [
-            /** Example */
-            /**
-             * 'operationId.hash' => true,
-             * 'pathFilter' => [
-             * 'tags' => [
-             * '/pets/',
-             * '/store/',
-             * ],
-             * ],.
-             */
+                'operationId.hash' => true,
+                'pathFilter' => [
+                    // تگ‌های مجاز (اگر تعریف شوند، فقط این تگ‌ها مجاز هستند)
+                    'allowedTags' => [
+                        'Projects',
+                        'Products', 
+                        'Clients',
+                        'Admin/User',
+                        'Admin/Products',
+                        'User/Profile',
+                        'Auth'
+                    ],
+                    // تگ‌های غیرمجاز (اگر تعریف شوند، این تگ‌ها ممنوع هستند)
+                    'notAllowedTags' => [
+                        // 'Internal',
+                        // 'Debug',
+                        // 'Test'
+                    ],
+                    // سازگاری با نسخه قبلی (اگر allowedTags تعریف نشده باشد)
+                    'tags' => [
+                        'Projects',
+                        'Products', 
+                        'Clients',
+                        'Admin/User',
+                        'Admin/Products',
+                        'User/Profile',
+                        'Auth'
+                    ],
+                ],
             ],
 
             /**

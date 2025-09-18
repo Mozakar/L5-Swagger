@@ -78,6 +78,63 @@ class SwaggerController extends BaseController
             ]);
         }
 
+        $allowedTags = $config['allowedTags'] ?? [];
+        $notAllowedTags = $config['notAllowedTags'] ?? [];
+        if (count($allowedTags) || count($notAllowedTags)){
+            $content = json_decode($content, true);
+            $filterPaths = function(array &$paths, array $tags, bool $inverse = false) {
+                foreach ($paths as $key => &$group) {
+                    foreach ($group as $k => $path) {
+                        $hasMatch = false;
+                        foreach ($path['tags'] as $tag) {
+                            foreach ($tags as $rule) {
+                                if ($this->matchString($rule, $tag)) {
+                                    $hasMatch = true;
+                                    break 2;
+                                }
+                            }
+                        }
+
+                        if (($inverse && $hasMatch) || (!$inverse && !$hasMatch)) {
+                            unset($group[$k]);
+                        }
+                    }
+
+                    if (empty($group)) {
+                        unset($paths[$key]);
+                    }
+                }
+            };
+
+            $filterTags = function(array &$tagsList, array $rules, bool $inverse = false) {
+                foreach ($tagsList as $key => $tag) {
+                    $matched = false;
+                    foreach ($rules as $rule) {
+                        if ($this->matchString($rule, $tag['name'])) {
+                            $matched = true;
+                            break;
+                        }
+                    }
+
+                    if (($inverse && $matched) || (!$inverse && !$matched)) {
+                        unset($tagsList[$key]);
+                    }
+                }
+            };
+
+            if (!empty($allowedTags)) {
+                $filterPaths($content['paths'], $allowedTags, false);
+                $filterTags($content['tags'],  $allowedTags, false);
+            }
+
+            if (!empty($notAllowedTags)) {
+                $filterPaths($content['paths'], $notAllowedTags, true);
+                $filterTags($content['tags'],  $notAllowedTags, true);
+            }
+
+            $content = json_encode($content);
+        }
+
         return response($content, 200, [
             'Content-Type' => 'application/json',
         ]);
@@ -197,5 +254,21 @@ class SwaggerController extends BaseController
         }
 
         return $urlsToDocs;
+    }
+    
+    /**
+     * matchString
+     *
+     * @param  mixed $pattern
+     * @param  mixed $text
+     * @return bool
+     */
+    private function matchString(string $pattern, string $text): bool
+    {
+        if (substr($pattern, -1) === '*') {
+            $keyword = rtrim($pattern, '*');
+            return strpos($text, $keyword) !== false;
+        }
+        return $text === $pattern;
     }
 }
